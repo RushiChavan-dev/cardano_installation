@@ -1,0 +1,164 @@
+sudo apt-get update -y && sudo apt-get upgrade -y
+sudo apt-get install automake build-essential pkg-config libffi-dev libgmp-dev libssl-dev libtinfo-dev libsystemd-dev zlib1g-dev make g++ tmux git jq wget libncursesw5 libtool autoconf -y
+
+
+
+curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+
+-------------------------------------------------------------------
+Please follow the instructions and provide the necessary input to the installer.
+
+Do you want ghcup to automatically add the required PATH variable to "/home/ubuntu/.bashrc"? - (P or enter)
+
+Do you want to install haskell-language-server (HLS)? - (N or enter)
+
+Do you want to install stack? - (N or enter)
+
+Press ENTER to proceed or ctrl-c to abort. (enter)
+
+Once complete, you should have ghc and cabal installed to your system.
+
+----------------------------------------------------------------------
+
+ghcup install ghc 8.10.7
+ghcup set ghc 8.10.7
+
+
+ghcup install cabal 3.6.2.0
+ghcup set cabal 3.6.2.0
+
+
+ghc --version
+
+
+cabal --version
+
+mkdir -p $HOME/cardano-src
+cd $HOME/cardano-src
+
+
+git clone https://github.com/input-output-hk/libsodium
+cd libsodium
+git checkout dbb48cc
+./autogen.sh
+./configure
+make
+sudo make install
+
+
+
+git clone https://github.com/input-output-hk/libsodium
+cd libsodium
+git checkout dbb48cc
+./autogen.sh
+./configure
+make
+sudo make install
+
+
+export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+
+
+cd $HOME/cardano-src
+git clone https://github.com/bitcoin-core/secp256k1
+cd secp256k1
+git checkout ac83be33
+./autogen.sh
+./configure --enable-module-schnorrsig --enable-experimental
+make
+make check
+sudo make install	
+
+
+
+cd $HOME/cardano-src
+
+
+
+git clone https://github.com/input-output-hk/cardano-node.git
+cd cardano-node
+git fetch --all --recurse-submodules --tags
+
+
+
+
+git checkout $(curl -s https://api.github.com/repos/input-output-hk/cardano-node/releases/latest | jq -r .tag_name)
+
+
+
+cabal configure --with-compiler=ghc-8.10.7
+
+
+
+
+-------------------------------------------------
+Note: Important for llvm
+
+bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+wget https://apt.llvm.org/llvm.sh
+chmod +x llvm.sh
+sudo ./llvm.sh all
+
+wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-9 main"
+sudo apt-get update
+sudo apt-get install -y llvm-9 llvm-9-dev
+
+
+
+sudo apt install clang-9 libnuma-dev
+
+
+
+sudo ln -s /usr/bin/llvm-config-9 /usr/bin/llvm-config
+sudo ln -s /usr/bin/opt-9 /usr/bin/opt
+sudo ln -s /usr/bin/llc-9 /usr/bin/llc
+sudo ln -s /usr/bin/clang-9 /usr/bin/clang
+
+
+
+cabal update
+cabal build all
+
+
+
+mkdir -p $HOME/.local/bin
+cp -p "$(./scripts/bin-path.sh cardano-node)" $HOME/.local/bin/
+cp -p "$(./scripts/bin-path.sh cardano-cli)" $HOME/.local/bin/
+
+
+export PATH="$HOME/.local/bin/:$PATH"
+
+
+cardano-cli --version
+cardano-node --version
+
+
+cd $HOME/cardano-node/cardano-testnet/
+mkdir config
+
+curl -O -J https://book.world.dev.cardano.org/environments/preprod/config.json
+curl -O -J https://book.world.dev.cardano.org/environments/preprod/db-sync-config.json
+curl -O -J https://book.world.dev.cardano.org/environments/preprod/submit-api-config.json
+curl -O -J https://book.world.dev.cardano.org/environments/preprod/topology.json
+curl -O -J https://book.world.dev.cardano.org/environments/preprod/byron-genesis.json
+curl -O -J https://book.world.dev.cardano.org/environments/preprod/shelley-genesis.json
+curl -O -J https://book.world.dev.cardano.org/environments/preprod/alonzo-genesis.json
+curl -O -J https://book.world.dev.cardano.org/environments/preprod/conway-genesis.json
+
+
+
+
+cd $HOME/cardano-node/
+
+cardano-node run --topology $HOME/cardano-node/cardano-testnet/config/topology.json --database-path $HOME/cardano-node/cardano-testnet/db --socket-path $HOME/cardano-node/cardano-testnet/db/node.socket --host-addr 0.0.0.0 --port 1337 --config $HOME/cardano-node/cardano-testnet/config/config.json
+
+
+Note: In every new terminal you have to write it 
+
+export CARDANO_NODE_SOCKET_PATH="$HOME/cardano-node/cardano-testnet/db/node.socket"
+
+
+cardano-cli query tip --testnet-magic 1
